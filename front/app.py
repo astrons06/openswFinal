@@ -14,102 +14,143 @@ GENRES = [
 PLATFORMS = ["PC", "PlayStation", "Xbox", "Nintendo Switch", "모바일"]
 
 st.set_page_config(
-    page_title="GameMatch - 게임 추천",
-    page_icon="🎮",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_title="픽업존",
+    page_icon="▣",
+    layout="centered",
+    initial_sidebar_state="collapsed",
 )
 
 st.markdown(
     """
     <style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: 800;
-        background: linear-gradient(90deg, #6C63FF, #FF6584);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.2rem;
+    #MainMenu, footer, header { visibility: hidden; }
+    .block-container { padding-top: 2rem; max-width: 640px; }
+    .stApp { background-color: #ece6d9; }
+    .pickup-title {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1c1c1c;
+        letter-spacing: -1px;
+        margin: 0;
     }
-    .sub-header {
-        color: #888;
-        font-size: 1.1rem;
-        margin-bottom: 2rem;
+    .pickup-sub {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.85rem;
+        color: #5c5346;
+        margin-top: 0.3rem;
+        margin-bottom: 1.6rem;
     }
-    .match-badge {
-        background: linear-gradient(90deg, #6C63FF, #FF6584);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: bold;
-        font-size: 0.9rem;
+    .pickup-box {
+        border: 2px solid #1c1c1c;
+        background: #faf7f0;
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
     }
-    .tag {
-        background: #2a2a4a;
-        color: #a0a0ff;
-        padding: 2px 10px;
-        border-radius: 12px;
+    .pickup-label {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.7rem;
+        color: #7a6f5d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.8rem;
+    }
+    .pickup-result {
+        border: 2px solid #1c1c1c;
+        border-left: 6px solid #c84b31;
+        background: #faf7f0;
+        padding: 0.9rem 1rem;
+        margin-bottom: 0.7rem;
+    }
+    .pickup-rank {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.75rem;
+        color: #c84b31;
+        font-weight: 700;
+    }
+    .pickup-game {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #1c1c1c;
+        margin: 0.15rem 0;
+    }
+    .pickup-meta {
         font-size: 0.8rem;
-        margin-right: 6px;
+        color: #5c5346;
     }
-    </style>
+    .pickup-desc {
+        font-size: 0.85rem;
+        color: #3a342c;
+        margin: 0.4rem 0 0.3rem;
+        line-height: 1.5;
+    }
+    .pickup-reason {
+        font-size: 0.78rem;
+        color: #5c5346;
+        margin: 0;
+        padding-left: 0.6rem;
+        border-left: 2px solid #d4cbb8;
+    }
+    .pickup-status {
+        font-family: "Courier New", Courier, monospace;
+        font-size: 0.72rem;
+        color: #7a6f5d;
+        text-align: right;
+        margin-bottom: 0.5rem;
+    }
+    .pickup-status-ok { color: #3d6b4f; }
+    .pickup-status-err { color: #c84b31; }
+    div[data-testid="stHorizontalBlock"] label p { font-size: 0.85rem; }
+  </style>
     """,
     unsafe_allow_html=True,
 )
 
-st.markdown('<p class="main-header">🎮 GameMatch</p>', unsafe_allow_html=True)
+st.markdown('<p class="pickup-title">픽업존</p>', unsafe_allow_html=True)
 st.markdown(
-    '<p class="sub-header">당신의 게임 취향을 분석해 딱 맞는 게임을 추천해 드립니다</p>',
+    '<p class="pickup-sub">오늘 밤 뭐 할지 모르겠으면, 조건만 넣고 골라보세요.</p>',
     unsafe_allow_html=True,
 )
 
-with st.sidebar:
-    st.header("🎯 게임 취향 입력")
-    st.markdown("---")
+api_ok = False
+game_count = 0
+try:
+    health = requests.get(f"{API_URL}/health", timeout=3)
+    if health.status_code == 200:
+        api_ok = True
+        game_count = health.json().get("games_loaded", 0)
+except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+    pass
 
-    genre = st.selectbox("선호 장르", GENRES, index=0)
-    platform = st.selectbox("플레이 플랫폼", PLATFORMS, index=0)
-    play_style = st.radio("플레이 스타일", ["솔로", "멀티", "협동"], horizontal=True)
-    session_time = st.select_slider(
-        "1회 플레이 시간",
-        options=["짧은 플레이", "중간 플레이", "긴 플레이"],
-        value="중간 플레이",
-    )
-    difficulty = st.select_slider(
-        "선호 난이도",
-        options=["쉬움", "보통", "어려움"],
-        value="보통",
-    )
-    multiplayer = st.selectbox(
-        "멀티플레이",
-        ["없음", "선택적", "필수"],
-        index=1,
-    )
-    mood = st.radio(
-        "원하는 분위기",
-        ["힐링", "경쟁", "모험", "창작"],
-        horizontal=True,
-    )
-    focus = st.radio(
-        "중시하는 요소",
-        ["스토리", "게임플레이"],
-        horizontal=True,
-    )
+status_class = "pickup-status-ok" if api_ok else "pickup-status-err"
+status_text = f"api · online · {game_count} titles" if api_ok else "api · offline"
+st.markdown(
+    f'<p class="pickup-status {status_class}">{status_text}</p>',
+    unsafe_allow_html=True,
+)
 
-    st.markdown("---")
-    recommend_btn = st.button("🚀 게임 추천 받기", use_container_width=True, type="primary")
+st.markdown('<div class="pickup-box"><p class="pickup-label">01 / 기본</p>', unsafe_allow_html=True)
+left, right = st.columns(2)
+with left:
+    genre = st.selectbox("장르", GENRES)
+    platform = st.selectbox("플랫폼", PLATFORMS)
+    play_style = st.selectbox("혼자 / 같이", ["솔로", "멀티", "협동"])
+with right:
+    session_time = st.selectbox("한 판 길이", ["짧은 플레이", "중간 플레이", "긴 플레이"])
+    difficulty = st.selectbox("난이도", ["쉬움", "보통", "어려움"])
+    multiplayer = st.selectbox("멀티 필요?", ["없음", "선택적", "필수"])
+st.markdown("</div>", unsafe_allow_html=True)
 
-status_col = st.columns([1])[0]
-with status_col:
-    try:
-        health = requests.get(f"{API_URL}/health", timeout=3)
-        if health.status_code == 200:
-            data = health.json()
-            st.success(f"API 연결됨 ({data['games_loaded']}개 게임)")
-        else:
-            st.error("API 오류")
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        st.error("API 연결 실패")
+st.markdown('<div class="pickup-box"><p class="pickup-label">02 / 분위기</p>', unsafe_allow_html=True)
+mood_col, focus_col = st.columns(2)
+with mood_col:
+    mood = st.radio("무드", ["힐링", "경쟁", "모험", "창작"], label_visibility="collapsed")
+with focus_col:
+    focus = st.radio("뭐가 더 중요?", ["스토리", "게임플레이"], label_visibility="collapsed")
+st.markdown("</div>", unsafe_allow_html=True)
+
+recommend_btn = st.button("추천 받기", use_container_width=True)
 
 if recommend_btn:
     payload = {
@@ -123,90 +164,57 @@ if recommend_btn:
         "focus": focus,
     }
 
-    with st.spinner("FastAPI에서 게임을 분석 중..."):
+    with st.spinner("서버에서 골라는 중..."):
         try:
-            response = requests.post(
-                f"{API_URL}/recommend",
-                json=payload,
-                timeout=10,
-            )
+            response = requests.post(f"{API_URL}/recommend", json=payload, timeout=10)
             response.raise_for_status()
             result = response.json()
         except requests.exceptions.ConnectionError:
-            st.error(
-                f"FastAPI 서버에 연결할 수 없습니다. (`{API_URL}`)\n\n"
-                "Docker 컨테이너가 실행 중인지 확인해 주세요."
-            )
+            st.error(f"백엔드에 연결 안 됨. ({API_URL}) docker ps 로 확인해보세요.")
             st.stop()
         except requests.exceptions.Timeout:
-            st.error("서버 응답 시간이 초과되었습니다.")
+            st.error("응답이 너무 느립니다.")
             st.stop()
         except requests.exceptions.HTTPError as e:
-            st.error(f"API 오류: {e}")
+            st.error(f"요청 실패: {e}")
             st.stop()
 
     st.markdown("---")
-    st.subheader("📊 분석 결과")
-    st.info(result["user_profile"])
-
-    metrics_col1, metrics_col2, metrics_col3 = st.columns(3)
-    metrics_col1.metric("추천 게임 수", len(result["recommendations"]))
-    metrics_col2.metric("매칭 후보", result["total_candidates"])
-    if result["recommendations"]:
-        metrics_col3.metric(
-            "최고 매칭률",
-            f"{result['recommendations'][0]['match_percent']}%",
-        )
-
-    st.success(f"💡 {result['play_tip']}")
-
-    st.markdown("---")
-    st.subheader("🏆 추천 게임 TOP 5")
+    st.markdown(
+        f'<p class="pickup-sub" style="margin-bottom:1rem;">{result["user_profile"]}</p>',
+        unsafe_allow_html=True,
+    )
+    st.caption(f"후보 {result['total_candidates']}개 중 상위 {len(result['recommendations'])}개")
+    st.caption(result["play_tip"])
 
     for i, game in enumerate(result["recommendations"], 1):
-        rank_emoji = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣"][i - 1]
-        header_col, score_col = st.columns([4, 1])
-        with header_col:
-            st.markdown(f"### {rank_emoji} {game['title']}")
-            st.caption(f"{game['genre']} · {', '.join(game['platform'])}")
-        with score_col:
-            st.markdown(
-                f'<div style="text-align:right; margin-top:10px;">'
-                f'<span class="match-badge">{game["match_percent"]}% 매칭</span></div>',
-                unsafe_allow_html=True,
-            )
-
-        st.write(game["description"])
-
-        tag_html = " ".join(
-            f'<span class="tag">#{tag}</span>' for tag in game["tags"]
+        reasons = " / ".join(game["reasons"][:2])
+        tags = ", ".join(game["tags"])
+        st.markdown(
+            f"""
+            <div class="pickup-result">
+                <p class="pickup-rank">NO.{i} · {game['match_percent']}%</p>
+                <p class="pickup-game">{game['title']}</p>
+                <p class="pickup-meta">{game['genre']} · {', '.join(game['platform'])}</p>
+                <p class="pickup-desc">{game['description']}</p>
+                <p class="pickup-meta">{tags}</p>
+                <p class="pickup-reason">{reasons}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
-        st.markdown(tag_html, unsafe_allow_html=True)
 
-        with st.expander("왜 추천했나요?"):
-            for reason in game["reasons"]:
-                st.markdown(f"- ✅ {reason}")
-
-        st.markdown("---")
-
-    with st.expander("🔍 API 응답 (JSON)"):
+    with st.expander("응답 원본 (json)"):
         st.json(result)
 
 else:
-    st.markdown("### 👈 왼쪽 사이드바에서 취향을 입력하고 추천 버튼을 눌러주세요!")
     st.markdown(
         """
-        **GameMatch**는 8가지 취향 요소를 분석해 최적의 게임을 추천합니다.
-
-        | 입력 항목 | 설명 |
-        |-----------|------|
-        | 장르 | 선호하는 게임 장르 |
-        | 플랫폼 | 사용 가능한 기기 |
-        | 플레이 스타일 | 솔로 / 멀티 / 협동 |
-        | 플레이 시간 | 한 번에 플레이하는 시간 |
-        | 난이도 | 선호하는 게임 난이도 |
-        | 멀티플레이 | 멀티 필요 여부 |
-        | 분위기 | 힐링 / 경쟁 / 모험 / 창작 |
-        | 중시 요소 | 스토리 vs 게임플레이 |
-        """
+        <div class="pickup-box" style="text-align:center; padding:2rem;">
+            <p class="pickup-meta" style="margin:0;">
+                위에서 조건 고르고<br>추천 받기 누르면 됩니다.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True,
     )

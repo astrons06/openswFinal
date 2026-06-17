@@ -7,8 +7,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 app = FastAPI(
-    title="GameMatch API",
-    description="게임 취향 기반 추천 API",
+    title="Pickup Zone API",
+    description="픽업존 게임 추천 백엔드",
     version="1.0.0",
 )
 
@@ -158,7 +158,7 @@ def build_play_tip(req: RecommendRequest, top_game: dict | None) -> str:
 @app.get("/")
 def root():
     return {
-        "service": "GameMatch API",
+        "service": "Pickup Zone API",
         "status": "running",
         "endpoints": ["/health", "/recommend", "/games"],
     }
