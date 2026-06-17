@@ -107,7 +107,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown('<p class="pickup-title">픽업존</p>', unsafe_allow_html=True)
+st.markdown('<p class="pickup-title">게임 추천 픽업 존에 온 걸 환영해요.</p>', unsafe_allow_html=True)
 st.markdown(
     '<p class="pickup-sub">오늘 밤 뭐 할지 모르겠으면, 조건만 넣고 골라보세요.</p>',
     unsafe_allow_html=True,
