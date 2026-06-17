@@ -1,0 +1,24 @@
+services:
+  back:
+    build: ./back
+    container_name: gamematch-api
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  front:
+    build: ./front
+    container_name: gamematch-front
+    ports:
+      - "8501:8501"
+    environment:
+      - API_URL=http://back:8000
+    depends_on:
+      back:
+        condition: service_healthy
+    restart: unless-stopped
